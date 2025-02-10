@@ -99,6 +99,22 @@
                 }
             });
         }
+
+        window.agregarFrase = function() {
+            salaID = localStorage.getItem("salaID");
+            let input = document.getElementById("fraseInput");
+            let frase = input.value.trim();
+            if (!frase) return;
+            frases.push(frase);
+            let ultimaPalabra = frase.split(" ").pop();
+            turno = (turno + 1) % jugadores.length;
+            update(ref(db, `salas/${salaID}`), {
+                frases: frases,
+                ultimaPalabra: ultimaPalabra,
+                turno: turno
+            });
+            input.value = "";
+        }
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
