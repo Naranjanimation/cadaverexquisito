@@ -7,7 +7,7 @@
     <script type="module">
         // Importar módulos de Firebase 9+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
@@ -26,17 +26,16 @@
         let salaID = "";
         let turno = 0;
         let frases = [];
+        let jugadores = {};
 
         window.crearSala = function() {
             salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
             console.log("Intentando crear sala con ID:", salaID);
-            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0 })
+            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, jugadores: {} })
                 .then(() => {
                     console.log("Sala creada exitosamente");
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
-                    document.getElementById("fraseInput").disabled = false;
-                    document.querySelector("button[onclick='agregarFrase()']").disabled = false;
                     localStorage.setItem("salaID", salaID);
                 })
                 .catch(error => {
@@ -47,31 +46,42 @@
 
         window.unirseSala = function() {
             salaID = document.getElementById("salaID").value;
-            if (!salaID) {
-                alert("Ingresa un código de sala válido");
+            let jugadorNombre = prompt("Ingresa tu nombre de jugador");
+            if (!salaID || !jugadorNombre) {
+                alert("Ingresa un código de sala válido y un nombre de jugador");
                 return;
             }
             console.log("Intentando unirse a la sala con ID:", salaID);
             localStorage.setItem("salaID", salaID);
-            get(ref(db, `salas/${salaID}`))
+            localStorage.setItem("jugador", jugadorNombre);
+            
+            const salaRef = ref(db, `salas/${salaID}`);
+            get(salaRef)
                 .then(snapshot => {
                     let data = snapshot.val();
                     if (data) {
                         console.log("Sala encontrada", data);
                         frases = data.frases || [];
+                        jugadores = data.jugadores || {};
+                        jugadores[jugadorNombre] = true;
+                        update(salaRef, { jugadores });
                         document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
-                        turno = data.turno;
-                        document.getElementById("fraseInput").disabled = false;
-                        document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+                        document.getElementById("jugadoresLista").innerText = Object.keys(jugadores).join(", ");
                     } else {
-                        console.warn("Sala no encontrada");
                         alert("Sala no encontrada. Verifica el código");
                     }
                 })
                 .catch(error => {
-                    console.error("Error al unirse a la sala:", error);
                     alert("Error al unirse a la sala: " + error.message);
                 });
+
+            onValue(salaRef, snapshot => {
+                let data = snapshot.val();
+                if (data) {
+                    document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
+                    document.getElementById("jugadoresLista").innerText = Object.keys(data.jugadores || {}).join(", ");
+                }
+            });
         }
 
         window.agregarFrase = function() {
@@ -81,7 +91,6 @@
             if (!frase) return;
             frases.push(frase);
             let ultimaPalabra = frase.split(" ").pop();
-            console.log("Agregando frase:", frase);
             update(ref(db, `salas/${salaID}`), {
                 frases: frases,
                 ultimaPalabra: ultimaPalabra,
@@ -89,7 +98,6 @@
             })
             .then(() => console.log("Frase agregada con éxito"))
             .catch(error => {
-                console.error("Error al actualizar la sala:", error);
                 alert("Error al actualizar la sala: " + error.message);
             });
             input.value = "";
@@ -106,9 +114,11 @@
     <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
     <button onclick="crearSala()">Crear Sala</button>
     <button onclick="unirseSala()">Unirse</button>
+    <h3>Jugadores en la sala:</h3>
+    <p id="jugadoresLista">[Ninguno]</p>
     <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required disabled>
-    <button onclick="agregarFrase()" disabled>Enviar</button>
+    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
+    <button onclick="agregarFrase()">Enviar</button>
     <h2 id="resultadoFinal"></h2>
 </body>
 </html>
