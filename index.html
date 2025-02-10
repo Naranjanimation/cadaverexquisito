@@ -45,27 +45,31 @@
             salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
             db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
-                .then(() => alert("Sala creada con éxito. Comparte el código: " + salaID))
+                .then(() => {
+                    alert("Sala creada con éxito. Comparte el código: " + salaID);
+                    document.getElementById("fraseInput").disabled = false;
+                    document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+                })
                 .catch(error => alert("Error al crear la sala: " + error.message));
-            document.getElementById("fraseInput").disabled = false;
-            document.querySelector("button[onclick='agregarFrase()']").disabled = false;
         }
 
         function unirseSala() {
             salaID = document.getElementById("salaID").value;
             if (!salaID) return alert("Ingresa un código de sala válido");
-            db.ref(`salas/${salaID}`).on("value", (snapshot) => {
-                let data = snapshot.val();
-                if (data) {
-                    frases = data.frases || [];
-                    document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
-                    turno = data.turno;
-                } else {
-                    alert("Sala no encontrada. Verifica el código");
-                }
-            });
-            document.getElementById("fraseInput").disabled = false;
-            document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+            db.ref(`salas/${salaID}`).once("value")
+                .then(snapshot => {
+                    let data = snapshot.val();
+                    if (data) {
+                        frases = data.frases || [];
+                        document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
+                        turno = data.turno;
+                        document.getElementById("fraseInput").disabled = false;
+                        document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+                    } else {
+                        alert("Sala no encontrada. Verifica el código");
+                    }
+                })
+                .catch(error => alert("Error al unirse a la sala: " + error.message));
         }
 
         function agregarFrase() {
