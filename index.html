@@ -4,60 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadáver Exquisito</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
-        #listaFrases { display: none; } /* Ocultar la lista de frases */
     </style>
 </head>
 <body>
     <h1>Cadáver Exquisito</h1>
-    <label for="numJugadores">Número de jugadores:</label>
-    <input type="number" id="numJugadores" min="2" value="2">
-    <button onclick="iniciarJuego()">Iniciar Juego</button>
+    <label for="salaID">Código de Sala:</label>
+    <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
+    <button onclick="crearSala()">Crear Sala</button>
+    <button onclick="unirseSala()">Unirse</button>
     <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
     <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required disabled>
     <button onclick="agregarFrase()" disabled>Enviar</button>
-    <button onclick="finalizarJuego()" disabled>Finalizar Juego</button>
     <h2 id="resultadoFinal"></h2>
 
     <script>
-        let frases = [];
-        let ultimaPalabra = "";
-        let jugadores;
-        let turno = 0;
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            databaseURL: "https://TU_PROYECTO.firebaseio.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
         
-        function iniciarJuego() {
-            jugadores = parseInt(document.getElementById("numJugadores").value);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let salaID = "";
+        let turno = 0;
+        let frases = [];
+
+        function crearSala() {
+            salaID = Math.random().toString(36).substring(7);
+            document.getElementById("salaID").value = salaID;
+            db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 });
             document.getElementById("fraseInput").disabled = false;
             document.querySelector("button[onclick='agregarFrase()']").disabled = false;
-            document.querySelector("button[onclick='finalizarJuego()']").disabled = false;
-            document.getElementById("numJugadores").disabled = true;
-            alert(`Turno del jugador ${turno + 1}`);
         }
-        
-        function obtenerUltimaPalabra(frase) {
-            let palabras = frase.trim().split(" ");
-            return palabras.length ? palabras[palabras.length - 1] : "";
+
+        function unirseSala() {
+            salaID = document.getElementById("salaID").value;
+            if (!salaID) return alert("Ingresa un código de sala válido");
+            db.ref(`salas/${salaID}`).on("value", (snapshot) => {
+                let data = snapshot.val();
+                if (data) {
+                    frases = data.frases || [];
+                    document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
+                    turno = data.turno;
+                }
+            });
+            document.getElementById("fraseInput").disabled = false;
+            document.querySelector("button[onclick='agregarFrase()']").disabled = false;
         }
 
         function agregarFrase() {
             let input = document.getElementById("fraseInput");
             let frase = input.value.trim();
-            if (frase) {
-                frases.push(frase);
-                ultimaPalabra = obtenerUltimaPalabra(frase);
-                document.getElementById("ultimaPalabra").innerText = ultimaPalabra;
-                input.value = "";
-                turno++;
-                if (turno >= jugadores) turno = 0; // Reinicia el turno
-                alert(`Turno del jugador ${turno + 1}`);
-                input.focus();
-            }
-        }
-
-        function finalizarJuego() {
-            document.getElementById("resultadoFinal").innerText = "✨ Resultado Final: " + frases.join(" ");
+            if (!frase) return;
+            frases.push(frase);
+            let ultimaPalabra = frase.split(" ").pop();
+            db.ref(`salas/${salaID}`).update({
+                frases: frases,
+                ultimaPalabra: ultimaPalabra,
+                turno: turno + 1
+            });
+            input.value = "";
         }
     </script>
 </body>
