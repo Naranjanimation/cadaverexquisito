@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadáver Exquisito</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
+        ul { list-style: none; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1>Cadáver Exquisito</h1>
+    <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
+    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
+    <button onclick="agregarFrase()">Enviar</button>
+    <h2>Frases ingresadas:</h2>
+    <ul id="listaFrases"></ul>
+    <button onclick="finalizarJuego()">Finalizar Juego</button>
+    <h2 id="resultadoFinal"></h2>
+
+    <script>
+        let frases = [];
+        let ultimaPalabra = "";
+
+        function obtenerUltimaPalabra(frase) {
+            let palabras = frase.trim().split(" ");
+            return palabras.length ? palabras[palabras.length - 1] : "";
+        }
+
+        function agregarFrase() {
+            let input = document.getElementById("fraseInput");
+            let frase = input.value.trim();
+            if (frase) {
+                frases.push(frase);
+                ultimaPalabra = obtenerUltimaPalabra(frase);
+                document.getElementById("ultimaPalabra").innerText = ultimaPalabra;
+                actualizarLista();
+                input.value = "";
+            }
+        }
+
+        function actualizarLista() {
+            let lista = document.getElementById("listaFrases");
+            lista.innerHTML = "";
+            frases.forEach(frase => {
+                let li = document.createElement("li");
+                li.innerText = frase;
+                lista.appendChild(li);
+            });
+        }
+
+        function finalizarJuego() {
+            document.getElementById("resultadoFinal").innerText = "✨ Resultado Final: " + frases.join(" ");
+        }
+    </script>
+</body>
+</html>
