@@ -24,17 +24,24 @@
         const db = getDatabase(app);
 
         let salaID = "";
-        let turno = 0;
         let frases = [];
-        let jugadores = {};
+        let jugadores = [];
+        let turno = 0;
 
         window.crearSala = function() {
             salaID = Math.random().toString(36).substring(7);
+            let jugadorNombre = prompt("Ingresa tu nombre de jugador");
+            if (!jugadorNombre) {
+                alert("Debes ingresar un nombre");
+                return;
+            }
             document.getElementById("salaID").value = salaID;
-            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, jugadores: {}, estado: "jugando" })
+            jugadores.push(jugadorNombre);
+            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, jugadores: jugadores, estado: "jugando" })
                 .then(() => {
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
                     localStorage.setItem("salaID", salaID);
+                    localStorage.setItem("jugador", jugadorNombre);
                 })
                 .catch(error => {
                     alert("Error al crear la sala: " + error.message);
@@ -57,9 +64,11 @@
                     let data = snapshot.val();
                     if (data) {
                         frases = data.frases || [];
-                        jugadores = data.jugadores || {};
-                        jugadores[jugadorNombre] = true;
-                        update(salaRef, { jugadores });
+                        jugadores = data.jugadores || [];
+                        if (!jugadores.includes(jugadorNombre)) {
+                            jugadores.push(jugadorNombre);
+                            update(salaRef, { jugadores });
+                        }
                     } else {
                         alert("Sala no encontrada. Verifica el código");
                     }
@@ -72,9 +81,9 @@
                 let data = snapshot.val();
                 if (data) {
                     document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
-                    document.getElementById("jugadoresLista").innerText = Object.keys(data.jugadores || {}).join(", ");
-                    document.getElementById("turnoJugador").innerText = Object.keys(data.jugadores || [])[data.turno];
-                    document.getElementById("fraseInput").disabled = localStorage.getItem("jugador") !== document.getElementById("turnoJugador").innerText;
+                    document.getElementById("jugadoresLista").innerText = data.jugadores.join(", ");
+                    document.getElementById("turnoJugador").innerText = data.jugadores[data.turno];
+                    document.getElementById("fraseInput").disabled = localStorage.getItem("jugador") !== data.jugadores[data.turno];
                     if (data.estado === "finalizado") {
                         document.getElementById("resultadoFinal").innerText = data.frases.join("\n");
                     }
@@ -89,10 +98,11 @@
             if (!frase) return;
             frases.push(frase);
             let ultimaPalabra = frase.split(" ").pop();
+            turno = (turno + 1) % jugadores.length;
             update(ref(db, `salas/${salaID}`), {
                 frases: frases,
                 ultimaPalabra: ultimaPalabra,
-                turno: (turno + 1) % Object.keys(jugadores).length
+                turno: turno
             });
             input.value = "";
         }
