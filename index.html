@@ -26,8 +26,9 @@
         const firebaseConfig = {
             apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
             authDomain: "cadaver-exquisito-4599e.firebaseapp.com",
+            databaseURL: "https://cadaver-exquisito-4599e-default-rtdb.firebaseio.com/",
             projectId: "cadaver-exquisito-4599e",
-            storageBucket: "cadaver-exquisito-4599e.firebasestorage.app",
+            storageBucket: "cadaver-exquisito-4599e.appspot.com",
             messagingSenderId: "271154167511",
             appId: "1:271154167511:web:ff97b2885a6125ce303a92",
             measurementId: "G-33WMQEJEK8"
@@ -43,7 +44,9 @@
         function crearSala() {
             salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
-            db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 });
+            db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
+                .then(() => alert("Sala creada con éxito. Comparte el código: " + salaID))
+                .catch(error => alert("Error al crear la sala: " + error.message));
             document.getElementById("fraseInput").disabled = false;
             document.querySelector("button[onclick='agregarFrase()']").disabled = false;
         }
@@ -57,6 +60,8 @@
                     frases = data.frases || [];
                     document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
                     turno = data.turno;
+                } else {
+                    alert("Sala no encontrada. Verifica el código");
                 }
             });
             document.getElementById("fraseInput").disabled = false;
@@ -73,7 +78,7 @@
                 frases: frases,
                 ultimaPalabra: ultimaPalabra,
                 turno: turno + 1
-            });
+            }).catch(error => alert("Error al actualizar la sala: " + error.message));
             input.value = "";
         }
     </script>
