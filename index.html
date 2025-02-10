@@ -115,6 +115,11 @@
             });
             input.value = "";
         }
+
+        window.finalizarPartida = function() {
+            salaID = localStorage.getItem("salaID");
+            update(ref(db, `salas/${salaID}`), { estado: "finalizado" });
+        }
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #2E2E2E; color: #FFA500; }
