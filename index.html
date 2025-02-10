@@ -36,12 +36,13 @@
                 return;
             }
             document.getElementById("salaID").value = salaID;
-            jugadores.push(jugadorNombre);
+            jugadores = [jugadorNombre];
             set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, jugadores: jugadores, estado: "jugando" })
                 .then(() => {
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
                     localStorage.setItem("salaID", salaID);
                     localStorage.setItem("jugador", jugadorNombre);
+                    unirseSala();
                 })
                 .catch(error => {
                     alert("Error al crear la sala: " + error.message);
@@ -50,7 +51,7 @@
 
         window.unirseSala = function() {
             salaID = document.getElementById("salaID").value;
-            let jugadorNombre = prompt("Ingresa tu nombre de jugador");
+            let jugadorNombre = localStorage.getItem("jugador") || prompt("Ingresa tu nombre de jugador");
             if (!salaID || !jugadorNombre) {
                 alert("Ingresa un código de sala válido y un nombre de jugador");
                 return;
