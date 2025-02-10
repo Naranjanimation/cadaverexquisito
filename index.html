@@ -28,6 +28,11 @@
         let jugadores = [];
         let turno = 0;
 
+        function mostrarJuego() {
+            document.getElementById("juego").style.display = "block";
+            document.getElementById("inicio").style.display = "none";
+        }
+
         window.crearSala = function() {
             salaID = Math.random().toString(36).substring(7);
             let jugadorNombre = prompt("Ingresa tu nombre de jugador");
@@ -42,6 +47,7 @@
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
                     localStorage.setItem("salaID", salaID);
                     localStorage.setItem("jugador", jugadorNombre);
+                    mostrarJuego();
                     unirseSala();
                 })
                 .catch(error => {
@@ -58,6 +64,7 @@
             }
             localStorage.setItem("salaID", salaID);
             localStorage.setItem("jugador", jugadorNombre);
+            mostrarJuego();
             
             const salaRef = ref(db, `salas/${salaID}`);
             get(salaRef)
@@ -92,56 +99,32 @@
                 }
             });
         }
-
-        window.agregarFrase = function() {
-            salaID = localStorage.getItem("salaID");
-            let input = document.getElementById("fraseInput");
-            let frase = input.value.trim();
-            if (!frase) return;
-            frases.push(frase);
-            let ultimaPalabra = frase.split(" ").pop();
-            turno = (turno + 1) % jugadores.length;
-            update(ref(db, `salas/${salaID}`), {
-                frases: frases,
-                ultimaPalabra: ultimaPalabra,
-                turno: turno
-            });
-            input.value = "";
-        }
-
-        window.finalizarPartida = function() {
-            salaID = localStorage.getItem("salaID");
-            update(ref(db, `salas/${salaID}`), { estado: "finalizado" });
-        }
-
-        window.reiniciarJuego = function() {
-            salaID = localStorage.getItem("salaID");
-            update(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, estado: "jugando" }).then(() => {
-                document.getElementById("resultadoFinal").innerText = "";
-                document.getElementById("reiniciarJuego").style.display = "none";
-            });
-        }
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
-        #reiniciarJuego { display: none; }
+        #juego { display: none; }
     </style>
 </head>
 <body>
-    <h1>Cadáver Exquisito</h1>
-    <label for="salaID">Código de Sala:</label>
-    <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
-    <button onclick="crearSala()">Crear Sala</button>
-    <button onclick="unirseSala()">Unirse</button>
-    <h3>Jugadores en la sala:</h3>
-    <p id="jugadoresLista">[Ninguno]</p>
-    <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
-    <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
-    <button onclick="agregarFrase()">Enviar</button>
-    <button onclick="finalizarPartida()">Finalizar Partida</button>
-    <h2 id="resultadoFinal"></h2>
-    <button id="reiniciarJuego" onclick="reiniciarJuego()">Volver a comenzar</button>
+    <div id="inicio">
+        <h1>Cadáver Exquisito</h1>
+        <label for="salaID">Código de Sala:</label>
+        <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
+        <button onclick="crearSala()">Crear Sala</button>
+        <button onclick="unirseSala()">Unirse</button>
+    </div>
+    
+    <div id="juego">
+        <h3>Jugadores en la sala:</h3>
+        <p id="jugadoresLista">[Ninguno]</p>
+        <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
+        <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
+        <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
+        <button onclick="agregarFrase()">Enviar</button>
+        <button onclick="finalizarPartida()">Finalizar Partida</button>
+        <h2 id="resultadoFinal"></h2>
+        <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
+    </div>
 </body>
 </html>
