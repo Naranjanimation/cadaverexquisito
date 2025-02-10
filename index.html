@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadáver Exquisito</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <script>
+    <script type="module">
+        // Importar módulos de Firebase 9+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
             authDomain: "cadaver-exquisito-4599e.firebaseapp.com",
@@ -18,18 +20,18 @@
             measurementId: "G-33WMQEJEK8"
         };
         
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
         let salaID = "";
         let turno = 0;
         let frases = [];
 
-        function crearSala() {
+        window.crearSala = function() {
             salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
             console.log("Intentando crear sala con ID:", salaID);
-            db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
+            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0 })
                 .then(() => {
                     console.log("Sala creada exitosamente");
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
@@ -43,7 +45,7 @@
                 });
         }
 
-        function unirseSala() {
+        window.unirseSala = function() {
             salaID = document.getElementById("salaID").value;
             if (!salaID) {
                 alert("Ingresa un código de sala válido");
@@ -51,7 +53,7 @@
             }
             console.log("Intentando unirse a la sala con ID:", salaID);
             localStorage.setItem("salaID", salaID);
-            db.ref(`salas/${salaID}`).once("value")
+            get(ref(db, `salas/${salaID}`))
                 .then(snapshot => {
                     let data = snapshot.val();
                     if (data) {
@@ -72,7 +74,7 @@
                 });
         }
 
-        function agregarFrase() {
+        window.agregarFrase = function() {
             salaID = localStorage.getItem("salaID");
             let input = document.getElementById("fraseInput");
             let frase = input.value.trim();
@@ -80,7 +82,7 @@
             frases.push(frase);
             let ultimaPalabra = frase.split(" ").pop();
             console.log("Agregando frase:", frase);
-            db.ref(`salas/${salaID}`).update({
+            update(ref(db, `salas/${salaID}`), {
                 frases: frases,
                 ultimaPalabra: ultimaPalabra,
                 turno: turno + 1
