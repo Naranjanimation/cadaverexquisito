@@ -6,22 +6,6 @@
     <title>Cadáver Exquisito</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-        input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
-    </style>
-</head>
-<body>
-    <h1>Cadáver Exquisito</h1>
-    <label for="salaID">Código de Sala:</label>
-    <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
-    <button onclick="crearSala()">Crear Sala</button>
-    <button onclick="unirseSala()">Unirse</button>
-    <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required disabled>
-    <button onclick="agregarFrase()" disabled>Enviar</button>
-    <h2 id="resultadoFinal"></h2>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
@@ -37,11 +21,12 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        let salaID = "";
         let turno = 0;
         let frases = [];
 
         function crearSala() {
-            let salaID = Math.random().toString(36).substring(7);
+            salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
             console.log("Intentando crear sala con ID:", salaID);
             db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
@@ -59,7 +44,7 @@
         }
 
         function unirseSala() {
-            let salaID = document.getElementById("salaID").value;
+            salaID = document.getElementById("salaID").value;
             if (!salaID) {
                 alert("Ingresa un código de sala válido");
                 return;
@@ -88,7 +73,7 @@
         }
 
         function agregarFrase() {
-            let salaID = localStorage.getItem("salaID");
+            salaID = localStorage.getItem("salaID");
             let input = document.getElementById("fraseInput");
             let frase = input.value.trim();
             if (!frase) return;
@@ -108,5 +93,20 @@
             input.value = "";
         }
     </script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Cadáver Exquisito</h1>
+    <label for="salaID">Código de Sala:</label>
+    <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
+    <button onclick="crearSala()">Crear Sala</button>
+    <button onclick="unirseSala()">Unirse</button>
+    <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
+    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required disabled>
+    <button onclick="agregarFrase()" disabled>Enviar</button>
+    <h2 id="resultadoFinal"></h2>
 </body>
 </html>
