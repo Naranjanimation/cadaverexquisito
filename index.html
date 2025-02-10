@@ -7,7 +7,7 @@
     <script type="module">
         // Importar módulos de Firebase 9+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
@@ -87,6 +87,7 @@
                     document.getElementById("fraseInput").disabled = localStorage.getItem("jugador") !== data.jugadores[data.turno];
                     if (data.estado === "finalizado") {
                         document.getElementById("resultadoFinal").innerText = data.frases.join("\n");
+                        document.getElementById("reiniciarJuego").style.display = "block";
                     }
                 }
             });
@@ -115,15 +116,16 @@
 
         window.reiniciarJuego = function() {
             salaID = localStorage.getItem("salaID");
-            remove(ref(db, `salas/${salaID}`)).then(() => {
-                alert("Juego reiniciado");
-                location.reload();
+            update(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, estado: "jugando" }).then(() => {
+                document.getElementById("resultadoFinal").innerText = "";
+                document.getElementById("reiniciarJuego").style.display = "none";
             });
         }
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
+        #reiniciarJuego { display: none; }
     </style>
 </head>
 <body>
@@ -139,7 +141,7 @@
     <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
     <button onclick="agregarFrase()">Enviar</button>
     <button onclick="finalizarPartida()">Finalizar Partida</button>
-    <button onclick="reiniciarJuego()">Volver a comenzar</button>
     <h2 id="resultadoFinal"></h2>
+    <button id="reiniciarJuego" onclick="reiniciarJuego()">Volver a comenzar</button>
 </body>
 </html>
