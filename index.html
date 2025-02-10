@@ -44,32 +44,46 @@
         function crearSala() {
             salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
+            console.log("Intentando crear sala con ID:", salaID);
             db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
                 .then(() => {
+                    console.log("Sala creada exitosamente");
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
                     document.getElementById("fraseInput").disabled = false;
                     document.querySelector("button[onclick='agregarFrase()']").disabled = false;
                 })
-                .catch(error => alert("Error al crear la sala: " + error.message));
+                .catch(error => {
+                    console.error("Error al crear la sala:", error);
+                    alert("Error al crear la sala: " + error.message);
+                });
         }
 
         function unirseSala() {
             salaID = document.getElementById("salaID").value;
-            if (!salaID) return alert("Ingresa un código de sala válido");
+            if (!salaID) {
+                alert("Ingresa un código de sala válido");
+                return;
+            }
+            console.log("Intentando unirse a la sala con ID:", salaID);
             db.ref(`salas/${salaID}`).once("value")
                 .then(snapshot => {
                     let data = snapshot.val();
                     if (data) {
+                        console.log("Sala encontrada", data);
                         frases = data.frases || [];
                         document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
                         turno = data.turno;
                         document.getElementById("fraseInput").disabled = false;
                         document.querySelector("button[onclick='agregarFrase()']").disabled = false;
                     } else {
+                        console.warn("Sala no encontrada");
                         alert("Sala no encontrada. Verifica el código");
                     }
                 })
-                .catch(error => alert("Error al unirse a la sala: " + error.message));
+                .catch(error => {
+                    console.error("Error al unirse a la sala:", error);
+                    alert("Error al unirse a la sala: " + error.message);
+                });
         }
 
         function agregarFrase() {
@@ -78,11 +92,17 @@
             if (!frase) return;
             frases.push(frase);
             let ultimaPalabra = frase.split(" ").pop();
+            console.log("Agregando frase:", frase);
             db.ref(`salas/${salaID}`).update({
                 frases: frases,
                 ultimaPalabra: ultimaPalabra,
                 turno: turno + 1
-            }).catch(error => alert("Error al actualizar la sala: " + error.message));
+            })
+            .then(() => console.log("Frase agregada con éxito"))
+            .catch(error => {
+                console.error("Error al actualizar la sala:", error);
+                alert("Error al actualizar la sala: " + error.message);
+            });
             input.value = "";
         }
     </script>
