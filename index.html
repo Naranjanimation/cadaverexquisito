@@ -7,23 +7,35 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         input, button { margin-top: 10px; padding: 10px; font-size: 16px; }
-        ul { list-style: none; padding: 0; }
+        #listaFrases { display: none; } /* Ocultar la lista de frases */
     </style>
 </head>
 <body>
     <h1>Cadáver Exquisito</h1>
+    <label for="numJugadores">Número de jugadores:</label>
+    <input type="number" id="numJugadores" min="2" value="2">
+    <button onclick="iniciarJuego()">Iniciar Juego</button>
     <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
-    <button onclick="agregarFrase()">Enviar</button>
-    <h2>Frases ingresadas:</h2>
-    <ul id="listaFrases"></ul>
-    <button onclick="finalizarJuego()">Finalizar Juego</button>
+    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required disabled>
+    <button onclick="agregarFrase()" disabled>Enviar</button>
+    <button onclick="finalizarJuego()" disabled>Finalizar Juego</button>
     <h2 id="resultadoFinal"></h2>
 
     <script>
         let frases = [];
         let ultimaPalabra = "";
-
+        let jugadores;
+        let turno = 0;
+        
+        function iniciarJuego() {
+            jugadores = parseInt(document.getElementById("numJugadores").value);
+            document.getElementById("fraseInput").disabled = false;
+            document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+            document.querySelector("button[onclick='finalizarJuego()']").disabled = false;
+            document.getElementById("numJugadores").disabled = true;
+            alert(`Turno del jugador ${turno + 1}`);
+        }
+        
         function obtenerUltimaPalabra(frase) {
             let palabras = frase.trim().split(" ");
             return palabras.length ? palabras[palabras.length - 1] : "";
@@ -36,19 +48,12 @@
                 frases.push(frase);
                 ultimaPalabra = obtenerUltimaPalabra(frase);
                 document.getElementById("ultimaPalabra").innerText = ultimaPalabra;
-                actualizarLista();
                 input.value = "";
+                turno++;
+                if (turno >= jugadores) turno = 0; // Reinicia el turno
+                alert(`Turno del jugador ${turno + 1}`);
+                input.focus();
             }
-        }
-
-        function actualizarLista() {
-            let lista = document.getElementById("listaFrases");
-            lista.innerHTML = "";
-            frases.forEach(frase => {
-                let li = document.createElement("li");
-                li.innerText = frase;
-                lista.appendChild(li);
-            });
         }
 
         function finalizarJuego() {
