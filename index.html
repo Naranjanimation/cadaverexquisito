@@ -37,12 +37,11 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let salaID = "";
         let turno = 0;
         let frases = [];
 
         function crearSala() {
-            salaID = Math.random().toString(36).substring(7);
+            let salaID = Math.random().toString(36).substring(7);
             document.getElementById("salaID").value = salaID;
             console.log("Intentando crear sala con ID:", salaID);
             db.ref(`salas/${salaID}`).set({ frases: [], ultimaPalabra: "", turno: 0 })
@@ -51,6 +50,7 @@
                     alert("Sala creada con éxito. Comparte el código: " + salaID);
                     document.getElementById("fraseInput").disabled = false;
                     document.querySelector("button[onclick='agregarFrase()']").disabled = false;
+                    localStorage.setItem("salaID", salaID);
                 })
                 .catch(error => {
                     console.error("Error al crear la sala:", error);
@@ -59,12 +59,13 @@
         }
 
         function unirseSala() {
-            salaID = document.getElementById("salaID").value;
+            let salaID = document.getElementById("salaID").value;
             if (!salaID) {
                 alert("Ingresa un código de sala válido");
                 return;
             }
             console.log("Intentando unirse a la sala con ID:", salaID);
+            localStorage.setItem("salaID", salaID);
             db.ref(`salas/${salaID}`).once("value")
                 .then(snapshot => {
                     let data = snapshot.val();
@@ -87,6 +88,7 @@
         }
 
         function agregarFrase() {
+            let salaID = localStorage.getItem("salaID");
             let input = document.getElementById("fraseInput");
             let frase = input.value.trim();
             if (!frase) return;
