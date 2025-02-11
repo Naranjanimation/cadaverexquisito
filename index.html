@@ -115,6 +115,25 @@
             });
             input.value = "";
         }
+            window.finalizarPartida = function() {
+            salaID = localStorage.getItem("salaID");
+            update(ref(db, `salas/${salaID}`), { estado: "finalizado" }).then(() => {
+                document.getElementById("reiniciarJuego").style.display = "block";
+            });
+        }
+
+        window.reiniciarJuego = function() {
+            salaID = localStorage.getItem("salaID");
+            update(ref(db, `salas/${salaID}`), {
+                frases: [],
+                ultimaPalabra: "",
+                turno: 0,
+                estado: "jugando"
+            }).then(() => {
+                document.getElementById("resultadoFinal").innerText = "";
+                document.getElementById("reiniciarJuego").style.display = "none";
+            });
+        }
     </script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #2E2E2E; color: #FFA500; }
@@ -145,5 +164,7 @@
         <p>Creado por Naranjanimation</p>
         <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150">
     </footer>
+    <button id="finalizarPartida" onclick="finalizarPartida()">Finalizar Partida</button>
+    <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
 </body>
 </html>
