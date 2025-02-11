@@ -35,7 +35,8 @@
     let jugadores = [];
     let turno = 0;
 
-    // Muestra el juego, actualiza el código de sala y lo muestra en pantalla
+    // Muestra el juego, actualiza el código de sala y lo muestra en pantalla.
+    // Sólo se llama cuando se crea o se ingresa a una partida.
     function mostrarJuego() {
       document.getElementById("juego").style.display = "flex";
       document.getElementById("inicio").style.display = "none";
@@ -222,7 +223,7 @@
     }
     /* Contenedor principal del juego con dos columnas */
     #juego {
-      display: none; /* Se mostrará al iniciar el juego */
+      display: none; /* Se mantiene oculto hasta que se ingrese a una partida */
       margin-top: 20px;
       display: flex;
       justify-content: center;
