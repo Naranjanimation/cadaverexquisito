@@ -35,9 +35,11 @@
     let jugadores = [];
     let turno = 0;
 
+    // Muestra el juego, actualiza el código de sala y lo muestra en pantalla
     function mostrarJuego() {
       document.getElementById("juego").style.display = "block";
       document.getElementById("inicio").style.display = "none";
+      document.getElementById("codigoSala").innerText = "Sala: " + salaID;
     }
 
     // Función para crear sala
@@ -215,8 +217,20 @@
     input::placeholder {
       color: #555;
     }
+    /* El contenedor del juego se mantiene centrado */
     #juego {
       display: none;
+    }
+    /* Estilos para títulos: en mayúsculas y con fuente aumentada 2pt (18px) */
+    h3, h2, p#codigoSala {
+      text-transform: uppercase;
+      font-size: 18px;
+    }
+    /* La lista de jugadores se mostrará alineada a la izquierda dentro de su contenedor */
+    #jugadoresLista {
+      text-align: left;
+      margin-left: 10%;
+      margin-right: 10%;
     }
     footer {
       margin-top: 20px;
@@ -235,21 +249,16 @@
   </div>
 
   <div id="juego">
-    <h3>Jugadores en la sala:</h3>
+    <!-- Elemento para mostrar el código/nombre de la sala -->
+    <p id="codigoSala"></p>
+    <h3>Jugadores en la sala</h3>
     <p id="jugadoresLista">[Ninguno]</p>
-    <h3>
-      Turno de: <span id="turnoJugador">[Nadie]</span>
-    </h3>
+    <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
     <p>
       Última palabra visible:
       <b id="ultimaPalabra">[Ninguna]</b>
     </p>
-    <input
-      type="text"
-      id="fraseInput"
-      placeholder="Escribe tu frase aquí"
-      required
-    />
+    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required />
     <button onclick="agregarFrase()">Enviar</button>
     <button onclick="finalizarPartida()">Finalizar Partida</button>
     <h2 id="resultadoFinal"></h2>
@@ -258,7 +267,7 @@
     </button>
   </div>
   <footer>
-    <p>Creado por</p>
+    <p>Creado por Naranjanimation</p>
     <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
   </footer>
 </body>
