@@ -100,25 +100,18 @@
             });
         }
 
-        window.agregarFrase = function() {
+        window.reiniciarJuego = function() {
             salaID = localStorage.getItem("salaID");
-            let input = document.getElementById("fraseInput");
-            let frase = input.value.trim();
-            if (!frase) return;
-            frases.push(frase);
-            let ultimaPalabra = frase.split(" ").pop();
-            turno = (turno + 1) % jugadores.length;
+            if (!salaID) return;
             update(ref(db, `salas/${salaID}`), {
-                frases: frases,
-                ultimaPalabra: ultimaPalabra,
-                turno: turno
+                frases: [],
+                ultimaPalabra: "",
+                turno: 0,
+                estado: "jugando"
+            }).then(() => {
+                document.getElementById("resultadoFinal").innerText = "";
+                document.getElementById("reiniciarJuego").style.display = "none";
             });
-            input.value = "";
-        }
-
-        window.finalizarPartida = function() {
-            salaID = localStorage.getItem("salaID");
-            update(ref(db, `salas/${salaID}`), { estado: "finalizado" });
         }
     </script>
     <style>
@@ -131,28 +124,10 @@
     </style>
 </head>
 <body>
-    <div id="inicio">
-        <h1>Cadáver Exquisito</h1>
-        <label for="salaID">Código de Sala:</label>
-        <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
-        <button onclick="crearSala()">Crear Sala</button>
-        <button onclick="unirseSala()">Unirse</button>
-    </div>
-    
-    <div id="juego">
-        <h3>Jugadores en la sala:</h3>
-        <p id="jugadoresLista">[Ninguno]</p>
-        <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
-        <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-        <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
-        <button onclick="agregarFrase()">Enviar</button>
-        <button onclick="finalizarPartida()">Finalizar Partida</button>
-        <h2 id="resultadoFinal"></h2>
-        <button id="reiniciarJuego" onclick="reiniciarJuego()">Volver a comenzar</button>
-    </div>
-    <footer>
-        <p>Creado por Naranjanimation</p>
-        <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150">
-    </footer>
+    <button id="reiniciarJuego" onclick="reiniciarJuego()">Volver a comenzar</button>
+<footer>
+    <p>Creado por Naranjanimation</p>
+    <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150">
+</footer>
 </body>
 </html>
