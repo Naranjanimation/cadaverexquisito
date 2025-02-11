@@ -44,10 +44,8 @@
     // Función que se llama cuando se agota el tiempo del turno (0 segundos restantes)
     function autoChangeTurn() {
       alert("Tiempo agotado. Se cambia de turno.");
-      // Avanza al siguiente jugador y actualiza Firebase
       turno = (turno + 1) % jugadores.length;
       update(ref(db, `salas/${salaID}`), { turno: turno });
-      // Reiniciamos el contador
       clearInterval(timerInterval);
       timerInterval = null;
       countdownTime = 60;
@@ -63,7 +61,6 @@
 
     // Función para crear sala (el creador define si jugará con temporizador)
     window.crearSala = function () {
-      // Genera un ID de sala de 6 caracteres
       salaID = Math.random().toString(36).substring(2, 8);
       let jugadorNombre = prompt("Ingresa tu nombre de jugador");
       if (!jugadorNombre) {
@@ -78,7 +75,7 @@
       jugarConTemporizador = jugarConTemporizador ? jugarConTemporizador.toLowerCase() : "no";
       const temporizador = (jugarConTemporizador === "si") ? "true" : "false";
 
-      // Al crear la sala, se añade la propiedad "creador" y "temporizador" en Firebase
+      // Crear la sala en Firebase y guardar propiedades "creador" y "temporizador"
       set(ref(db, `salas/${salaID}`), {
         frases: [],
         ultimaPalabra: "",
@@ -92,12 +89,10 @@
           alert("Sala creada con éxito. Comparte el código: " + salaID);
           localStorage.setItem("salaID", salaID);
           localStorage.setItem("jugador", jugadorNombre);
-          // El creador se marca en localStorage
           localStorage.setItem("creador", "true");
-          // Guardamos la opción del temporizador en localStorage
           localStorage.setItem("temporizador", temporizador);
           mostrarJuego();
-          unirseSala(); 
+          unirseSala();
         })
         .catch((error) => {
           alert("Error al crear la sala: " + error.message);
@@ -118,18 +113,15 @@
       mostrarJuego();
 
       const salaRef = ref(db, `salas/${salaID}`);
-      // Verificar si la sala existe y actualizar la lista de jugadores
       get(salaRef)
         .then((snapshot) => {
           let data = snapshot.val();
           if (data) {
             frases = data.frases || [];
             jugadores = data.jugadores || [];
-            // Guardar la opción de temporizador que está en la sala (si existe)
             if (data.temporizador) {
               localStorage.setItem("temporizador", data.temporizador);
             }
-            // Verificamos si el jugador que se une es el creador
             if (data.creador === jugadorNombre) {
               localStorage.setItem("creador", "true");
             } else {
@@ -159,20 +151,32 @@
           document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
           document.getElementById("jugadoresLista").innerText = jugadores.join(", ");
           document.getElementById("turnoJugador").innerText = jugadores[turno] || "[Nadie]";
-          // Habilita o deshabilita el input según el turno
-          document.getElementById("fraseInput").disabled =
-            localStorage.getItem("jugador") !== jugadores[turno];
+
+          // Verificar que haya al menos 2 jugadores antes de permitir el inicio
+          if (jugadores.length < 2) {
+            document.getElementById("waitingMessage").innerText =
+              "Esperando a que se unan más jugadores...";
+            document.getElementById("fraseInput").disabled = true;
+            // También, se detiene el temporizador (si estuviera activo)
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById("timer").innerText = "";
+          } else {
+            document.getElementById("waitingMessage").innerText = "";
+            // Habilitar el input solo si es el turno del jugador
+            document.getElementById("fraseInput").disabled =
+              localStorage.getItem("jugador") !== jugadores[turno];
+          }
 
           if (gameState === "finalizado") {
             document.getElementById("resultadoFinal").innerText = frases.join("\n");
             document.getElementById("reiniciarJuego").style.display = "block";
-            // Se deshabilita el input y se oculta el temporizador
             document.getElementById("fraseInput").disabled = true;
             document.getElementById("timer").innerText = "";
           }
           
-          // Manejo del contador si se juega con temporizador
-          if (localStorage.getItem("temporizador") === "true") {
+          // Manejo del contador si se juega con temporizador y ya hay 2 o más jugadores
+          if (localStorage.getItem("temporizador") === "true" && jugadores.length >= 2) {
             if (turno !== lastTurn) {
               clearInterval(timerInterval);
               timerInterval = null;
@@ -199,7 +203,6 @@
               document.getElementById("timer").innerText = "";
             }
           } else {
-            // Si se juega sin temporizador, nos aseguramos de limpiar el contador
             clearInterval(timerInterval);
             timerInterval = null;
             document.getElementById("timer").innerText = "";
@@ -342,6 +345,12 @@
       margin-top: 10px;
       font-weight: bold;
     }
+    /* Mensaje de espera hasta que haya 2 jugadores */
+    #waitingMessage {
+      font-size: 16px;
+      color: #ffcc00;
+      margin-top: 10px;
+    }
     h3, h2, p#codigoSala {
       text-transform: uppercase;
       font-size: 18px;
@@ -371,13 +380,15 @@
         <h3>Jugadores en la sala</h3>
         <p id="jugadoresLista">[Ninguno]</p>
       </div>
-      <!-- Zona de juego: Turno, input, botones y temporizador -->
+      <!-- Zona de juego: Turno, mensaje de espera, input, botones y temporizador -->
       <div id="zonaJuego">
         <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
         <p>
           Última palabra visible:
           <b id="ultimaPalabra">[Ninguna]</b>
         </p>
+        <!-- Mensaje de espera hasta que haya al menos 2 jugadores -->
+        <p id="waitingMessage"></p>
         <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required />
         <br />
         <button onclick="agregarFrase()">Enviar</button>
