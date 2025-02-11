@@ -35,7 +35,7 @@
     let jugadores = [];
     let turno = 0;
     let lastTurn = -1; // Para detectar cuando cambia el turno
-    let gameState = "jugando"; // "jugando" o "finalizado"
+    let gameState = "jugando"; // Estado de la partida ("jugando" o "finalizado")
 
     // Variables para el contador visual (usado solo si se juega con temporizador)
     let countdownTime = 60;
@@ -166,14 +166,18 @@
               localStorage.getItem("jugador") !== jugadores[turno];
           }
 
+          // Si la partida está finalizada, se muestran las frases y se deshabilita el input
           if (gameState === "finalizado") {
             document.getElementById("resultadoFinal").innerText = frases.join("\n");
             document.getElementById("reiniciarJuego").style.display = "block";
             document.getElementById("fraseInput").disabled = true;
             document.getElementById("timer").innerText = "";
+          } else {
+            // Si el estado es "jugando", aseguramos que el resultado final se borre (para todos)
+            document.getElementById("resultadoFinal").innerText = "";
           }
           
-          // Reproducir sonido y reiniciar el temporizador cuando cambie el turno
+          // Reproducir sonido y reiniciar el temporizador cuando cambia el turno
           if (turno !== lastTurn) {
             let audio = document.getElementById("turnSound");
             if (audio) {
@@ -269,8 +273,7 @@
         ultimaPalabra: ""
       })
         .then(() => {
-          document.getElementById("resultadoFinal").innerText = "";
-          document.getElementById("reiniciarJuego").style.display = "none";
+          // El callback onValue se encargará de limpiar el resultado final en todos los clientes
           alert("El juego se ha reiniciado para todos los jugadores.");
         })
         .catch((error) => {
