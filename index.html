@@ -100,36 +100,17 @@
             });
         }
 
-        window.agregarFrase = function() {
+        window.finalizarPartida = function() {
             salaID = localStorage.getItem("salaID");
-            let input = document.getElementById("fraseInput");
-            let frase = input.value.trim();
-            if (!frase) return;
-            frases.push(frase);
-            let ultimaPalabra = frase.split(" ").pop();
-            turno = (turno + 1) % jugadores.length;
-            update(ref(db, `salas/${salaID}`), {
-                frases: frases,
-                ultimaPalabra: ultimaPalabra,
-                turno: turno
+            get(ref(db, `salas/${salaID}`)).then(snapshot => {
+                let data = snapshot.val();
+                if (data && data.frases) {
+                    document.getElementById("resultadoFinal").innerText = data.frases.join("\n");
+                    document.getElementById("resultadoFinal").style.display = "block";
+                    document.getElementById("reiniciarJuego").style.display = "block";
+                }
             });
-            input.value = "";
-        }
-            window.finalizarPartida = function() {
-    salaID = localStorage.getItem("salaID");
-    get(ref(db, `salas/${salaID}`)).then(snapshot => {
-        let data = snapshot.val();
-        if (data && data.frases) {
-            document.getElementById("resultadoFinal").innerText = data.frases.join("
-");
-            document.getElementById("resultadoFinal").style.display = "block";
-            document.getElementById("reiniciarJuego").style.display = "block";
-        }
-    });
-    update(ref(db, `salas/${salaID}`), { estado: "finalizado" });
-}`), { estado: "finalizado" }).then(() => {
-                document.getElementById("reiniciarJuego").style.display = "block";
-            });
+            update(ref(db, `salas/${salaID}`), { estado: "finalizado" });
         }
 
         window.reiniciarJuego = function() {
@@ -154,29 +135,6 @@
     </style>
 </head>
 <body>
-    <div id="inicio">
-        <h1>Cadáver Exquisito</h1>
-        <label for="salaID">Código de Sala:</label>
-        <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
-        <button onclick="crearSala()">Crear Sala</button>
-        <button onclick="unirseSala()">Unirse</button>
-    </div>
-    
-    <div id="juego">
-        <h3>Jugadores en la sala:</h3>
-        <p id="jugadoresLista">[Ninguno]</p>
-        <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
-        <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-        <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
-        <button onclick="agregarFrase()">Enviar</button>
-    </div>
-    <footer>
-        <p>Creado por Naranjanimation</p>
-        <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150">
-    </footer>
-    <button id="finalizarPartida" onclick="finalizarPartida()">Finalizar Partida</button>
-    <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
-    <div id="resultadoFinal" style="display: none; text-align: center; font-size: 18px; margin-top: 20px; color: #FFA500;"></div>
     <button id="finalizarPartida" onclick="finalizarPartida()">Finalizar Partida</button>
     <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
 </body>
