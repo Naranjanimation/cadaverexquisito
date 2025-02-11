@@ -152,7 +152,7 @@
           document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
           document.getElementById("jugadoresLista").innerText = jugadores.join(", ");
           document.getElementById("turnoJugador").innerText = jugadores[turno] || "[Nadie]";
-          
+
           // Verificar que haya al menos 2 jugadores
           if (jugadores.length < 2) {
             document.getElementById("waitingMessage").innerText =
@@ -174,14 +174,20 @@
             document.getElementById("timer").innerText = "";
           }
           
+          // Reproducir sonido cuando cambia el turno
+          if (turno !== lastTurn) {
+            let audio = document.getElementById("turnSound");
+            if (audio) {
+              audio.play();
+            }
+            clearInterval(timerInterval);
+            timerInterval = null;
+            countdownTime = 60;
+            lastTurn = turno;
+          }
+          
           // Manejo del contador si se juega con temporizador y hay al menos 2 jugadores
           if (localStorage.getItem("temporizador") === "true" && jugadores.length >= 2) {
-            if (turno !== lastTurn) {
-              clearInterval(timerInterval);
-              timerInterval = null;
-              countdownTime = 60;
-              lastTurn = turno;
-            }
             if (localStorage.getItem("jugador") === jugadores[turno] && gameState !== "finalizado") {
               if (!timerInterval) {
                 countdownTime = 60;
@@ -404,6 +410,8 @@
       </div>
     </div>
   </div>
+  <!-- Elemento de audio para reproducir la campana en el cambio de turno -->
+  <audio id="turnSound" src="bell.mp3"></audio>
   <footer>
     <p>Creado por Naranjanimation</p>
     <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
