@@ -1,152 +1,256 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadáver Exquisito</title>
-    <script type="module">
-        // Importar módulos de Firebase 9+
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadáver Exquisito</title>
+  <script type="module">
+    // Importar módulos de Firebase 9+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      get,
+      update,
+      onValue,
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
-            authDomain: "cadaver-exquisito-4599e.firebaseapp.com",
-            databaseURL: "https://cadaver-exquisito-4599e-default-rtdb.firebaseio.com/",
-            projectId: "cadaver-exquisito-4599e",
-            storageBucket: "cadaver-exquisito-4599e.appspot.com",
-            messagingSenderId: "271154167511",
-            appId: "1:271154167511:web:ff97b2885a6125ce303a92",
-            measurementId: "G-33WMQEJEK8"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyCArI-Ulxbl-Vb82Eyw-_-p4RIBGkIp3gk",
+      authDomain: "cadaver-exquisito-4599e.firebaseapp.com",
+      databaseURL: "https://cadaver-exquisito-4599e-default-rtdb.firebaseio.com/",
+      projectId: "cadaver-exquisito-4599e",
+      storageBucket: "cadaver-exquisito-4599e.appspot.com",
+      messagingSenderId: "271154167511",
+      appId: "1:271154167511:web:ff97b2885a6125ce303a92",
+      measurementId: "G-33WMQEJEK8",
+    };
 
-        let salaID = "";
-        let frases = [];
-        let jugadores = [];
-        let turno = 0;
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        function mostrarJuego() {
-            document.getElementById("juego").style.display = "block";
-            document.getElementById("inicio").style.display = "none";
-        }
+    let salaID = "";
+    let frases = [];
+    let jugadores = [];
+    let turno = 0;
 
-        window.crearSala = function() {
-            salaID = Math.random().toString(36).substring(7);
-            let jugadorNombre = prompt("Ingresa tu nombre de jugador");
-            if (!jugadorNombre) {
-                alert("Debes ingresar un nombre");
-                return;
+    function mostrarJuego() {
+      document.getElementById("juego").style.display = "block";
+      document.getElementById("inicio").style.display = "none";
+    }
+
+    // Función para crear sala
+    window.crearSala = function () {
+      // Genera un ID de sala de 6 caracteres
+      salaID = Math.random().toString(36).substring(2, 8);
+      let jugadorNombre = prompt("Ingresa tu nombre de jugador");
+      if (!jugadorNombre) {
+        alert("Debes ingresar un nombre");
+        return;
+      }
+      document.getElementById("salaID").value = salaID;
+      jugadores = [jugadorNombre];
+      // Crea la sala con la estructura inicial en Firebase
+      set(ref(db, `salas/${salaID}`), {
+        frases: [],
+        ultimaPalabra: "",
+        turno: 0,
+        jugadores: jugadores,
+        estado: "jugando",
+      })
+        .then(() => {
+          alert("Sala creada con éxito. Comparte el código: " + salaID);
+          localStorage.setItem("salaID", salaID);
+          localStorage.setItem("jugador", jugadorNombre);
+          mostrarJuego();
+          unirseSala(); // Llama a la función para suscribirse a la sala
+        })
+        .catch((error) => {
+          alert("Error al crear la sala: " + error.message);
+        });
+    };
+
+    // Función para unirse a una sala
+    window.unirseSala = function () {
+      salaID = document.getElementById("salaID").value;
+      let jugadorNombre =
+        localStorage.getItem("jugador") || prompt("Ingresa tu nombre de jugador");
+      if (!salaID || !jugadorNombre) {
+        alert("Ingresa un código de sala válido y un nombre de jugador");
+        return;
+      }
+      localStorage.setItem("salaID", salaID);
+      localStorage.setItem("jugador", jugadorNombre);
+      mostrarJuego();
+
+      const salaRef = ref(db, `salas/${salaID}`);
+      // Verificar si la sala existe y actualizar la lista de jugadores
+      get(salaRef)
+        .then((snapshot) => {
+          let data = snapshot.val();
+          if (data) {
+            frases = data.frases || [];
+            jugadores = data.jugadores || [];
+            if (!jugadores.includes(jugadorNombre)) {
+              jugadores.push(jugadorNombre);
+              update(salaRef, { jugadores });
             }
-            document.getElementById("salaID").value = salaID;
-            jugadores = [jugadorNombre];
-            set(ref(db, `salas/${salaID}`), { frases: [], ultimaPalabra: "", turno: 0, jugadores: jugadores, estado: "jugando" })
-                .then(() => {
-                    alert("Sala creada con éxito. Comparte el código: " + salaID);
-                    localStorage.setItem("salaID", salaID);
-                    localStorage.setItem("jugador", jugadorNombre);
-                    mostrarJuego();
-                    unirseSala();
-                })
-                .catch(error => {
-                    alert("Error al crear la sala: " + error.message);
-                });
-        }
+          } else {
+            alert("Sala no encontrada. Verifica el código");
+          }
+        })
+        .catch((error) => {
+          alert("Error al unirse a la sala: " + error.message);
+        });
 
-        window.unirseSala = function() {
-            salaID = document.getElementById("salaID").value;
-            let jugadorNombre = localStorage.getItem("jugador") || prompt("Ingresa tu nombre de jugador");
-            if (!salaID || !jugadorNombre) {
-                alert("Ingresa un código de sala válido y un nombre de jugador");
-                return;
-            }
-            localStorage.setItem("salaID", salaID);
-            localStorage.setItem("jugador", jugadorNombre);
-            mostrarJuego();
-            
-            const salaRef = ref(db, `salas/${salaID}`);
-            get(salaRef)
-                .then(snapshot => {
-                    let data = snapshot.val();
-                    if (data) {
-                        frases = data.frases || [];
-                        jugadores = data.jugadores || [];
-                        if (!jugadores.includes(jugadorNombre)) {
-                            jugadores.push(jugadorNombre);
-                            update(salaRef, { jugadores });
-                        }
-                    } else {
-                        alert("Sala no encontrada. Verifica el código");
-                    }
-                })
-                .catch(error => {
-                    alert("Error al unirse a la sala: " + error.message);
-                });
+      // Suscribirse a cambios en la sala
+      onValue(salaRef, (snapshot) => {
+        let data = snapshot.val();
+        if (data) {
+          // Actualizamos las variables globales para mantener sincronía
+          frases = data.frases || [];
+          jugadores = data.jugadores || [];
+          turno = data.turno || 0;
 
-            onValue(salaRef, snapshot => {
-                let data = snapshot.val();
-                if (data) {
-                    document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
-                    document.getElementById("jugadoresLista").innerText = data.jugadores.join(", ");
-                    document.getElementById("turnoJugador").innerText = data.jugadores[data.turno];
-                    document.getElementById("fraseInput").disabled = localStorage.getItem("jugador") !== data.jugadores[data.turno];
-                    if (data.estado === "finalizado") {
-                        document.getElementById("resultadoFinal").innerText = data.frases.join("\n");
-                        document.getElementById("reiniciarJuego").style.display = "block";
-                    }
-                }
-            });
+          document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
+          document.getElementById("jugadoresLista").innerText = jugadores.join(", ");
+          document.getElementById("turnoJugador").innerText = jugadores[turno] || "[Nadie]";
+          // Habilita o deshabilita el input según el turno
+          document.getElementById("fraseInput").disabled =
+            localStorage.getItem("jugador") !== jugadores[turno];
+          // Si la sala está finalizada, muestra el resultado final y botón de reinicio
+          if (data.estado === "finalizado") {
+            document.getElementById("resultadoFinal").innerText = frases.join("\n");
+            document.getElementById("reiniciarJuego").style.display = "block";
+          }
         }
+      });
+    };
 
-        window.agregarFrase = function() {
-            salaID = localStorage.getItem("salaID");
-            let input = document.getElementById("fraseInput");
-            let frase = input.value.trim();
-            if (!frase) return;
-            frases.push(frase);
-            let ultimaPalabra = frase.split(" ").pop();
-            turno = (turno + 1) % jugadores.length;
-            update(ref(db, `salas/${salaID}`), {
-                frases: frases,
-                ultimaPalabra: ultimaPalabra,
-                turno: turno
-            });
-            input.value = "";
-        }
-    </script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #2E2E2E; color: #FFA500; }
-        input, button { margin-top: 10px; padding: 10px; font-size: 16px; color: #2E2E2E; background-color: #FFA500; border: none; cursor: pointer; }
-        input::placeholder { color: #555; }
-        #juego { display: none; }
-        footer { margin-top: 20px; font-size: 14px; color: #FFA500; }
-    </style>
+    // Función para agregar una frase
+    window.agregarFrase = function () {
+      salaID = localStorage.getItem("salaID");
+      let input = document.getElementById("fraseInput");
+      let frase = input.value.trim();
+      if (!frase) return;
+      frases.push(frase);
+      // Extraer la última palabra de la frase
+      let ultimaPalabra = frase.split(" ").pop();
+      // Calcular el nuevo turno
+      turno = (turno + 1) % jugadores.length;
+      // Actualizar la sala en Firebase
+      update(ref(db, `salas/${salaID}`), {
+        frases: frases,
+        ultimaPalabra: ultimaPalabra,
+        turno: turno,
+      });
+      input.value = "";
+    };
+
+    // Función para finalizar la partida
+    window.finalizarPartida = function () {
+      salaID = localStorage.getItem("salaID");
+      const salaRef = ref(db, `salas/${salaID}`);
+      // Se actualiza el estado a "finalizado"
+      update(salaRef, { estado: "finalizado" })
+        .then(() => {
+          alert("Partida finalizada.");
+        })
+        .catch((error) => {
+          alert("Error al finalizar la partida: " + error.message);
+        });
+    };
+
+    // Función para reiniciar el juego
+    window.reiniciarJuego = function () {
+      salaID = localStorage.getItem("salaID");
+      const salaRef = ref(db, `salas/${salaID}`);
+      // Reiniciar variables: vaciar frases, reiniciar turno y estado a "jugando"
+      frases = [];
+      turno = 0;
+      update(salaRef, {
+        frases: [],
+        turno: 0,
+        estado: "jugando",
+        ultimaPalabra: "",
+      })
+        .then(() => {
+          document.getElementById("resultadoFinal").innerText = "";
+          document.getElementById("reiniciarJuego").style.display = "none";
+          alert("El juego se ha reiniciado.");
+        })
+        .catch((error) => {
+          alert("Error al reiniciar el juego: " + error.message);
+        });
+    };
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #2e2e2e;
+      color: #ffa500;
+    }
+    input,
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+      color: #2e2e2e;
+      background-color: #ffa500;
+      border: none;
+      cursor: pointer;
+    }
+    input::placeholder {
+      color: #555;
+    }
+    #juego {
+      display: none;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #ffa500;
+    }
+  </style>
 </head>
 <body>
-    <div id="inicio">
-        <h1>Cadáver Exquisito</h1>
-        <label for="salaID">Código de Sala:</label>
-        <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required>
-        <button onclick="crearSala()">Crear Sala</button>
-        <button onclick="unirseSala()">Unirse</button>
-    </div>
-    
-    <div id="juego">
-        <h3>Jugadores en la sala:</h3>
-        <p id="jugadoresLista">[Ninguno]</p>
-        <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
-        <p>Última palabra visible: <b id="ultimaPalabra">[Ninguna]</b></p>
-        <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required>
-        <button onclick="agregarFrase()">Enviar</button>
-        <button onclick="finalizarPartida()">Finalizar Partida</button>
-        <h2 id="resultadoFinal"></h2>
-        <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
-    </div>
-    <footer>
-        <p>Creado por Naranjanimation</p>
-        <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150">
-    </footer>
+  <div id="inicio">
+    <h1>Cadáver Exquisito</h1>
+    <label for="salaID">Código de Sala:</label>
+    <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required />
+    <button onclick="crearSala()">Crear Sala</button>
+    <button onclick="unirseSala()">Unirse</button>
+  </div>
+
+  <div id="juego">
+    <h3>Jugadores en la sala:</h3>
+    <p id="jugadoresLista">[Ninguno]</p>
+    <h3>
+      Turno de: <span id="turnoJugador">[Nadie]</span>
+    </h3>
+    <p>
+      Última palabra visible:
+      <b id="ultimaPalabra">[Ninguna]</b>
+    </p>
+    <input
+      type="text"
+      id="fraseInput"
+      placeholder="Escribe tu frase aquí"
+      required
+    />
+    <button onclick="agregarFrase()">Enviar</button>
+    <button onclick="finalizarPartida()">Finalizar Partida</button>
+    <h2 id="resultadoFinal"></h2>
+    <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none">
+      Volver a comenzar
+    </button>
+  </div>
+  <footer>
+    <p>Creado por Naranjanimation</p>
+    <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
+  </footer>
 </body>
 </html>
