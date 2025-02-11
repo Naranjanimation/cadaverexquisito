@@ -35,6 +35,7 @@
     let jugadores = [];
     let turno = 0;
     let lastTurn = -1; // Para detectar cuando cambia el turno
+    let gameState = "jugando"; // Estado de la partida ("jugando" o "finalizado")
 
     // Variables para el contador visual (usado solo si se juega con temporizador)
     let countdownTime = 60;
@@ -74,7 +75,6 @@
 
       // Preguntar si se desea jugar con temporizador
       let jugarConTemporizador = prompt("¿Desea jugar con temporizador? (si/no)");
-      // Convertir respuesta a minúsculas y verificar
       jugarConTemporizador = jugarConTemporizador ? jugarConTemporizador.toLowerCase() : "no";
       const temporizador = (jugarConTemporizador === "si") ? "true" : "false";
 
@@ -97,7 +97,7 @@
           // Guardamos la opción del temporizador en localStorage
           localStorage.setItem("temporizador", temporizador);
           mostrarJuego();
-          unirseSala(); // Llama a la función para suscribirse a la sala
+          unirseSala(); 
         })
         .catch((error) => {
           alert("Error al crear la sala: " + error.message);
@@ -151,10 +151,10 @@
       onValue(salaRef, (snapshot) => {
         let data = snapshot.val();
         if (data) {
-          // Actualizamos las variables globales para mantener sincronía
           frases = data.frases || [];
           jugadores = data.jugadores || [];
           turno = data.turno || 0;
+          gameState = data.estado || "jugando";
 
           document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
           document.getElementById("jugadoresLista").innerText = jugadores.join(", ");
@@ -162,23 +162,24 @@
           // Habilita o deshabilita el input según el turno
           document.getElementById("fraseInput").disabled =
             localStorage.getItem("jugador") !== jugadores[turno];
-          // Si la sala está finalizada, muestra el resultado final y el botón de reinicio
-          if (data.estado === "finalizado") {
+
+          if (gameState === "finalizado") {
             document.getElementById("resultadoFinal").innerText = frases.join("\n");
             document.getElementById("reiniciarJuego").style.display = "block";
+            // Se deshabilita el input y se oculta el temporizador
+            document.getElementById("fraseInput").disabled = true;
+            document.getElementById("timer").innerText = "";
           }
           
-          // Manejo del contador solo si se juega con temporizador
+          // Manejo del contador si se juega con temporizador
           if (localStorage.getItem("temporizador") === "true") {
-            // Reiniciamos el contador si ha cambiado el turno
             if (turno !== lastTurn) {
               clearInterval(timerInterval);
               timerInterval = null;
               countdownTime = 60;
               lastTurn = turno;
             }
-            // Si es tu turno, iniciamos el contador (si aún no está iniciado)
-            if (localStorage.getItem("jugador") === jugadores[turno]) {
+            if (localStorage.getItem("jugador") === jugadores[turno] && gameState !== "finalizado") {
               if (!timerInterval) {
                 countdownTime = 60;
                 document.getElementById("timer").innerText = "Tiempo restante: " + countdownTime + "s";
@@ -193,13 +194,12 @@
                 }, 1000);
               }
             } else {
-              // Si no es tu turno, detenemos y limpiamos el contador
               clearInterval(timerInterval);
               timerInterval = null;
               document.getElementById("timer").innerText = "";
             }
           } else {
-            // Si se juega sin temporizador, limpiamos el contador (oculto)
+            // Si se juega sin temporizador, nos aseguramos de limpiar el contador
             clearInterval(timerInterval);
             timerInterval = null;
             document.getElementById("timer").innerText = "";
@@ -208,31 +208,31 @@
       });
     };
 
-    // Función para agregar una frase
+    // Función para agregar una frase (solo si la partida sigue en juego)
     window.agregarFrase = function () {
+      if (gameState === "finalizado") {
+        alert("La partida ha finalizado, no se pueden agregar más frases.");
+        return;
+      }
       salaID = localStorage.getItem("salaID");
       let input = document.getElementById("fraseInput");
       let frase = input.value.trim();
       if (!frase) return;
       frases.push(frase);
-      // Extraer la última palabra de la frase
       let ultimaPalabra = frase.split(" ").pop();
-      // Calcular el nuevo turno
       turno = (turno + 1) % jugadores.length;
-      // Actualizar la sala en Firebase
       update(ref(db, `salas/${salaID}`), {
         frases: frases,
         ultimaPalabra: ultimaPalabra,
         turno: turno,
       });
       input.value = "";
-      // Al enviar la frase, se cancela el contador del turno (si estuviera activo)
       clearInterval(timerInterval);
       timerInterval = null;
       document.getElementById("timer").innerText = "";
     };
 
-    // Función para finalizar la partida (solo permite al creador hacerlo)
+    // Función para finalizar la partida (solo el creador puede hacerlo)
     window.finalizarPartida = function () {
       if (localStorage.getItem("creador") !== "true") {
         alert("Solo el creador de la sala puede finalizar la partida.");
@@ -272,12 +272,11 @@
     };
   </script>
   <style>
-    /* Aseguramos que html y body ocupen el 100% de la altura */
     html, body {
       height: 100%;
       margin: 0;
     }
-    /* Centrar todo el contenido principal vertical y horizontalmente */
+    /* Centrado vertical y horizontal del contenido principal */
     body {
       display: flex;
       flex-direction: column;
@@ -295,7 +294,6 @@
       justify-content: center;
       width: 100%;
     }
-    /* Pantalla de inicio centrada */
     #inicio {
       text-align: center;
     }
@@ -307,13 +305,12 @@
       border: none;
       cursor: pointer;
     }
-    /* Botones en color púrpura, texto blanco y en negrita */
+    /* Botones: fondo púrpura, texto blanco y en negrita */
     button {
       background-color: #800080;
       color: #ffffff;
       font-weight: bold;
     }
-    /* Centrado para el botón "Volver a comenzar" */
     #reiniciarJuego {
       display: block;
       margin: 20px auto 0 auto;
@@ -328,7 +325,7 @@
       justify-content: center;
       align-items: flex-start;
     }
-    /* Panel lateral para la lista de jugadores, ubicado a la izquierda */
+    /* Panel lateral para la lista de jugadores */
     #sidebar {
       width: 200px;
       text-align: left;
@@ -339,13 +336,12 @@
       max-width: 600px;
       text-align: center;
     }
-    /* Elemento para mostrar el contador */
+    /* Elemento para el contador visual */
     #timer {
       font-size: 20px;
       margin-top: 10px;
       font-weight: bold;
     }
-    /* Estilos para títulos: mayúsculas y tamaño de fuente aumentado (18px) */
     h3, h2, p#codigoSala {
       text-transform: uppercase;
       font-size: 18px;
@@ -368,15 +364,14 @@
       <button onclick="crearSala()">Crear Sala</button>
       <button onclick="unirseSala()">Unirse</button>
     </div>
-
     <div id="juego">
-      <!-- Panel lateral: Sección de jugadores a la izquierda -->
+      <!-- Panel lateral: Lista de jugadores -->
       <div id="sidebar">
         <p id="codigoSala"></p>
         <h3>Jugadores en la sala</h3>
         <p id="jugadoresLista">[Ninguno]</p>
       </div>
-      <!-- Zona de juego centrada -->
+      <!-- Zona de juego: Turno, input, botones y temporizador -->
       <div id="zonaJuego">
         <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
         <p>
@@ -388,7 +383,7 @@
         <button onclick="agregarFrase()">Enviar</button>
         <button onclick="finalizarPartida()">Finalizar Partida</button>
         <h2 id="resultadoFinal"></h2>
-        <!-- Contador visual para el tiempo del turno -->
+        <!-- Contador visual -->
         <p id="timer"></p>
         <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none">
           Volver a comenzar
@@ -396,7 +391,6 @@
       </div>
     </div>
   </div>
-
   <footer>
     <p>Creado por Naranjanimation</p>
     <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
