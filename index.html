@@ -37,7 +37,7 @@
 
     // Muestra el juego, actualiza el código de sala y lo muestra en pantalla
     function mostrarJuego() {
-      document.getElementById("juego").style.display = "block";
+      document.getElementById("juego").style.display = "flex";
       document.getElementById("inicio").style.display = "none";
       document.getElementById("codigoSala").innerText = "Sala: " + salaID;
     }
@@ -190,10 +190,13 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
       background-color: #2e2e2e;
       color: #ffa500;
+      margin: 20px;
+    }
+    /* Contenedor del inicio centrado */
+    #inicio {
+      text-align: center;
     }
     input,
     button {
@@ -203,7 +206,7 @@
       border: none;
       cursor: pointer;
     }
-    /* Estilo para botones: color púrpura, texto blanco y en negrita */
+    /* Botones en color púrpura, texto blanco y en negrita */
     button {
       background-color: #800080;
       color: #ffffff;
@@ -217,24 +220,34 @@
     input::placeholder {
       color: #555;
     }
-    /* El contenedor del juego se mantiene centrado */
+    /* Contenedor principal del juego con dos columnas */
     #juego {
-      display: none;
+      display: none; /* Se mostrará al iniciar el juego */
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
-    /* Estilos para títulos: en mayúsculas y con fuente aumentada 2pt (18px) */
+    /* Panel lateral para la lista de jugadores, ubicado a la izquierda */
+    #sidebar {
+      width: 200px;
+      text-align: left;
+      margin-right: 20px;
+    }
+    /* Zona de juego centrada */
+    #zonaJuego {
+      max-width: 600px;
+      text-align: center;
+    }
+    /* Estilos para títulos: mayúsculas y tamaño de fuente aumentado (18px) */
     h3, h2, p#codigoSala {
       text-transform: uppercase;
       font-size: 18px;
     }
-    /* La lista de jugadores se mostrará alineada a la izquierda dentro de su contenedor */
-    #jugadoresLista {
-      text-align: left;
-      margin-left: 10%;
-      margin-right: 10%;
-    }
     footer {
       margin-top: 20px;
       font-size: 14px;
+      text-align: center;
       color: #ffa500;
     }
   </style>
@@ -244,28 +257,36 @@
     <h1>Cadáver Exquisito</h1>
     <label for="salaID">Código de Sala:</label>
     <input type="text" id="salaID" placeholder="Ingresa código o crea uno" required />
+    <br />
     <button onclick="crearSala()">Crear Sala</button>
     <button onclick="unirseSala()">Unirse</button>
   </div>
 
   <div id="juego">
-    <!-- Elemento para mostrar el código/nombre de la sala -->
-    <p id="codigoSala"></p>
-    <h3>Jugadores en la sala</h3>
-    <p id="jugadoresLista">[Ninguno]</p>
-    <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
-    <p>
-      Última palabra visible:
-      <b id="ultimaPalabra">[Ninguna]</b>
-    </p>
-    <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required />
-    <button onclick="agregarFrase()">Enviar</button>
-    <button onclick="finalizarPartida()">Finalizar Partida</button>
-    <h2 id="resultadoFinal"></h2>
-    <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none">
-      Volver a comenzar
-    </button>
+    <!-- Panel lateral: Sección de jugadores a la izquierda -->
+    <div id="sidebar">
+      <p id="codigoSala"></p>
+      <h3>Jugadores en la sala</h3>
+      <p id="jugadoresLista">[Ninguno]</p>
+    </div>
+    <!-- Zona de juego centrada -->
+    <div id="zonaJuego">
+      <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
+      <p>
+        Última palabra visible:
+        <b id="ultimaPalabra">[Ninguna]</b>
+      </p>
+      <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required />
+      <br />
+      <button onclick="agregarFrase()">Enviar</button>
+      <button onclick="finalizarPartida()">Finalizar Partida</button>
+      <h2 id="resultadoFinal"></h2>
+      <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none">
+        Volver a comenzar
+      </button>
+    </div>
   </div>
+
   <footer>
     <p>Creado por Naranjanimation</p>
     <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
