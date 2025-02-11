@@ -35,8 +35,7 @@
     let jugadores = [];
     let turno = 0;
 
-    // Muestra el juego, actualiza el código de sala y lo muestra en pantalla.
-    // Sólo se llama cuando se crea o se ingresa a una partida.
+    // Muestra el juego (oculta la pantalla de inicio y muestra el contenedor del juego)
     function mostrarJuego() {
       document.getElementById("juego").style.display = "flex";
       document.getElementById("inicio").style.display = "none";
@@ -195,7 +194,7 @@
       color: #ffa500;
       margin: 20px;
     }
-    /* Contenedor del inicio centrado */
+    /* Pantalla de inicio centrada */
     #inicio {
       text-align: center;
     }
@@ -221,11 +220,10 @@
     input::placeholder {
       color: #555;
     }
-    /* Contenedor principal del juego con dos columnas */
+    /* Contenedor principal del juego: oculto por defecto */
     #juego {
-      display: none; /* Se mantiene oculto hasta que se ingrese a una partida */
+      display: none;
       margin-top: 20px;
-      display: flex;
       justify-content: center;
       align-items: flex-start;
     }
