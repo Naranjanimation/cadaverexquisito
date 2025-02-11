@@ -126,6 +126,7 @@
         input, button { margin-top: 10px; padding: 10px; font-size: 16px; color: #2E2E2E; background-color: #FFA500; border: none; cursor: pointer; }
         input::placeholder { color: #555; }
         #juego { display: none; }
+        #reiniciarJuego { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 15px 30px; font-size: 18px; }
         footer { margin-top: 20px; font-size: 14px; color: #FFA500; }
     </style>
 </head>
@@ -147,7 +148,7 @@
         <button onclick="agregarFrase()">Enviar</button>
         <button onclick="finalizarPartida()">Finalizar Partida</button>
         <h2 id="resultadoFinal"></h2>
-        <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none;">Volver a comenzar</button>
+        <button id="reiniciarJuego" onclick="reiniciarJuego()">Volver a comenzar</button>
     </div>
     <footer>
         <p>Creado por Naranjanimation</p>
