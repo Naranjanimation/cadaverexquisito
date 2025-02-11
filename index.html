@@ -35,7 +35,8 @@
     let jugadores = [];
     let turno = 0;
     let lastTurn = -1; // Para detectar cuando cambia el turno
-    let gameState = "jugando"; // Estado de la partida ("jugando" o "finalizado")
+    let gameState = "jugando"; // "jugando" o "finalizado"
+    // Nota: la nueva propiedad "comenzada" (que indica si la partida ya inició) se guarda en Firebase
 
     // Variables para el contador visual (usado solo si se juega con temporizador)
     let countdownTime = 60;
@@ -59,6 +60,22 @@
       document.getElementById("codigoSala").innerText = "Sala: " + salaID;
     }
 
+    // Función para comenzar la partida (solamente el creador puede pulsar este botón)
+    window.comenzarPartida = function () {
+      if (localStorage.getItem("creador") !== "true") {
+        alert("Solo el creador puede comenzar la partida.");
+        return;
+      }
+      // Actualizar Firebase para indicar que la partida ha comenzado
+      update(ref(db, `salas/${salaID}`), { comenzada: "true" })
+        .then(() => {
+          alert("La partida ha comenzado.");
+        })
+        .catch((error) => {
+          alert("Error al comenzar la partida: " + error.message);
+        });
+    };
+
     // Función para crear sala (el creador define si jugará con temporizador)
     window.crearSala = function () {
       salaID = Math.random().toString(36).substring(2, 8);
@@ -75,7 +92,7 @@
       jugarConTemporizador = jugarConTemporizador ? jugarConTemporizador.toLowerCase() : "no";
       const temporizador = (jugarConTemporizador === "si") ? "true" : "false";
 
-      // Crear la sala en Firebase y guardar propiedades "creador" y "temporizador"
+      // Al crear la sala se guarda también la propiedad "comenzada" en "false"
       set(ref(db, `salas/${salaID}`), {
         frases: [],
         ultimaPalabra: "",
@@ -83,7 +100,8 @@
         jugadores: jugadores,
         estado: "jugando",
         creador: jugadorNombre,
-        temporizador: temporizador
+        temporizador: temporizador,
+        comenzada: "false"
       })
         .then(() => {
           alert("Sala creada con éxito. Comparte el código: " + salaID);
@@ -102,8 +120,7 @@
     // Función para unirse a una sala
     window.unirseSala = function () {
       salaID = document.getElementById("salaID").value;
-      let jugadorNombre =
-        localStorage.getItem("jugador") || prompt("Ingresa tu nombre de jugador");
+      let jugadorNombre = localStorage.getItem("jugador") || prompt("Ingresa tu nombre de jugador");
       if (!salaID || !jugadorNombre) {
         alert("Ingresa un código de sala válido y un nombre de jugador");
         return;
@@ -147,33 +164,50 @@
           jugadores = data.jugadores || [];
           turno = data.turno || 0;
           gameState = data.estado || "jugando";
+          let partidaComenzada = data.comenzada || "false";
 
           document.getElementById("ultimaPalabra").innerText = data.ultimaPalabra;
           document.getElementById("jugadoresLista").innerText = jugadores.join(", ");
           document.getElementById("turnoJugador").innerText = jugadores[turno] || "[Nadie]";
 
-          // Verificar que haya al menos 2 jugadores antes de iniciar la partida
+          // Verificar que haya al menos 2 jugadores
           if (jugadores.length < 2) {
-            document.getElementById("waitingMessage").innerText =
-              "Esperando a que se unan más jugadores...";
+            document.getElementById("waitingMessage").innerText = "Esperando a que se unan más jugadores...";
             document.getElementById("fraseInput").disabled = true;
             clearInterval(timerInterval);
             timerInterval = null;
             document.getElementById("timer").innerText = "";
           } else {
             document.getElementById("waitingMessage").innerText = "";
-            document.getElementById("fraseInput").disabled =
-              localStorage.getItem("jugador") !== jugadores[turno];
+            // Si la partida no ha comenzado, no mostrar la zona de tipeo
+            if (partidaComenzada === "false") {
+              // Mostrar el área de inicio de partida
+              if (localStorage.getItem("creador") === "true") {
+                document.getElementById("startGameArea").innerHTML =
+                  '<button onclick="comenzarPartida()">Comenzar partida</button>';
+              } else {
+                document.getElementById("startGameArea").innerHTML =
+                  'Esperando a que el creador comience la partida...';
+              }
+              // Ocultar el input y los botones de envío
+              document.getElementById("fraseInput").style.display = "none";
+              document.getElementById("timer").style.display = "none";
+            } else {
+              // La partida ya comenzó: ocultar el área de inicio y mostrar el input
+              document.getElementById("startGameArea").innerHTML = "";
+              document.getElementById("fraseInput").style.display = "block";
+              document.getElementById("fraseInput").disabled = localStorage.getItem("jugador") !== jugadores[turno];
+              document.getElementById("timer").style.display = "block";
+            }
           }
 
-          // Si la partida está finalizada, se muestran las frases y se deshabilita el input
           if (gameState === "finalizado") {
             document.getElementById("resultadoFinal").innerText = frases.join("\n");
             document.getElementById("reiniciarJuego").style.display = "block";
             document.getElementById("fraseInput").disabled = true;
             document.getElementById("timer").innerText = "";
           } else {
-            // Si el estado es "jugando", aseguramos que el resultado final se borre (para todos)
+            // Si la partida está en juego, aseguramos que el resultado final se borre
             document.getElementById("resultadoFinal").innerText = "";
           }
           
@@ -189,8 +223,8 @@
             lastTurn = turno;
           }
           
-          // Manejo del contador si se juega con temporizador y hay al menos 2 jugadores
-          if (localStorage.getItem("temporizador") === "true" && jugadores.length >= 2) {
+          // Manejo del contador si se juega con temporizador y la partida ya comenzó y hay al menos 2 jugadores
+          if (localStorage.getItem("temporizador") === "true" && jugadores.length >= 2 && partidaComenzada === "true") {
             if (localStorage.getItem("jugador") === jugadores[turno] && gameState !== "finalizado") {
               if (!timerInterval) {
                 countdownTime = 60;
@@ -270,10 +304,11 @@
         frases: [],
         turno: 0,
         estado: "jugando",
-        ultimaPalabra: ""
+        ultimaPalabra: "",
+        // Al reiniciar, también reiniciamos "comenzada" a "false" para que se vuelva a mostrar el botón de "Comenzar partida"
+        comenzada: "false"
       })
         .then(() => {
-          // El callback onValue se encargará de limpiar el resultado final en todos los clientes
           alert("El juego se ha reiniciado para todos los jugadores.");
         })
         .catch((error) => {
@@ -362,6 +397,11 @@
       color: #ffcc00;
       margin-top: 10px;
     }
+    /* Área de inicio de partida (botón o mensaje) */
+    #startGameArea {
+      margin-top: 10px;
+      font-size: 16px;
+    }
     h3, h2, p#codigoSala {
       text-transform: uppercase;
       font-size: 18px;
@@ -391,14 +431,16 @@
         <h3>Jugadores en la sala</h3>
         <p id="jugadoresLista">[Ninguno]</p>
       </div>
-      <!-- Zona de juego: Turno, mensaje de espera, input, botones y temporizador -->
+      <!-- Zona de juego: Área para iniciar la partida, luego input, botones y temporizador -->
       <div id="zonaJuego">
         <h3>Turno de: <span id="turnoJugador">[Nadie]</span></h3>
         <p>
           Última palabra visible:
           <b id="ultimaPalabra">[Ninguna]</b>
         </p>
-        <p id="waitingMessage"></p>
+        <!-- Área para mostrar el botón "Comenzar partida" o un mensaje (solo si la partida no ha comenzado) -->
+        <div id="startGameArea"></div>
+        <!-- Área de juego: input y botones para enviar frase (se muestran solo si la partida ha comenzado) -->
         <input type="text" id="fraseInput" placeholder="Escribe tu frase aquí" required />
         <br />
         <button onclick="agregarFrase()">Enviar</button>
@@ -409,13 +451,15 @@
         <button id="reiniciarJuego" onclick="reiniciarJuego()" style="display: none">
           Volver a comenzar
         </button>
+        <!-- Mensaje de espera hasta que haya 2 jugadores -->
+        <p id="waitingMessage"></p>
       </div>
     </div>
   </div>
   <!-- Elemento de audio para reproducir la campana en el cambio de turno -->
   <audio id="turnSound" src="bell.mp3"></audio>
   <footer>
-    <p>Creado por</p>
+    <p>Creado por Naranjanimation</p>
     <img src="https://i.postimg.cc/8zcTFQ3S/Signature.png" alt="Naranjanimation" width="150" />
   </footer>
 </body>
